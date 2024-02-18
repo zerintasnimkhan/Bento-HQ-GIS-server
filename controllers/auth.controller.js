@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/user.model");
+const User = require("../models/auth.model");
 require("dotenv").config();
 const SECRET = process.env.JWT_SECRET;
 
@@ -74,41 +74,6 @@ async function register(req, res) {
   }
 }
 
-async function registerRestaurant(req, res) {
-  try {
-    const { name, email, password, type } = req.body;
-    if (!name || !email || !password || type) {
-      res.status(403).send("Invalid registration info.");
-    } else {
-      const checkUser = await User.getUserByEmail(email);
-      if (checkUser?.email) {
-        res.status(403).send("An account with this email already exists.");
-      } else {
-        const salt = bcrypt.genSaltSync(10);
-        const pass = bcrypt.hashSync(password, salt);
 
-        const result = await User.createUser(name, email, pass, type);
-        const proj = { _id: 1, name: 1, email: 1, password: 1, type: 1 };
-        const projectedUsers = await User.getUserByEmail(email, proj);
+module.exports = { register, login };
 
-        const token = jwt.sign({ id: result._id }, SECRET);
-        res.setHeader("Authorization", "Bearer " + token);
-        res.status(201).send(projectedUsers[0]);
-      }
-    }
-  } catch (error) {
-    res.status(500).send(error);
-    console.log(error);
-  }
-}
-
-
-async function getAuthUserInfo (req, res) {
-  try {
-    res.send({ user: req.user});
-  } catch (error) {
-    res.status(500).send(error);
-    console.log(error);
-  }
-}
-module.exports = { register, login, registerRestaurant, getAuthUserInfo };
